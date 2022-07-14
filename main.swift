@@ -11,20 +11,56 @@
 import Foundation
 
 // test invocation -> replace the argument for your environment
-FolderStructure.printFolders(for: "/Users/yusuke/Desktop/textbooks/test")
+let folderStructure = FolderStructure()
+folderStructure.printFolders(for: "/Users/yusuke/Desktop/textbooks/test")
 
 class FolderStructure {
-    static let paddingChar = "      "
-    static let branchChar1 = "│ "
-    static let branchChar2 = "└─ "
-    static let branchChar3 = "├─ "
     
-    static func printFolders(for rootPath: String) -> Void{
+    private var fileNumber = 0
+    private var folderNumber = 0
+    
+    init() {}
+    
+    let paddingChar = "      "
+    let branchChar1 = "│ "
+    let branchChar2 = "└─ "
+    let branchChar3 = "├─ "
+    
+    func printFolders(for rootPath: String) -> Void{
         print(rootPath)
         printFoldersHelper(for: rootPath, depth: 0)
+        print()
+        printTotalFileNumber()
+        print()
     }
-
-    private static func printFoldersHelper(for parentPath: String, depth: Int, padding: String = "") -> Void {
+    
+    private func incrementFileNumber() -> Void {
+        self.fileNumber += 1
+    }
+    
+    private func incrementFolferNumber() -> Void {
+        self.folderNumber += 1
+    }
+    
+    func getFileNumber() -> Int {
+        return self.fileNumber
+    }
+    
+    func getFolderNumber() -> Int {
+        return self.folderNumber
+    }
+    
+    func resetCounter() -> Void {
+        self.folderNumber = 0
+        self.fileNumber = 0
+    }
+    
+    private func printTotalFileNumber() -> Void {
+        print("\(getFolderNumber()) directories, \(getFileNumber()) files")
+        resetCounter()
+    }
+    
+    private func printFoldersHelper(for parentPath: String, depth: Int, padding: String = "") -> Void {
         do {
             let directoryContents = try FileManager.default.contentsOfDirectory(atPath: parentPath)
             
@@ -33,12 +69,18 @@ class FolderStructure {
                     print(branchChar1, terminator: "")
                 }
                 
+                // manage number of file(folder)
+                if !isDirectory(at: parentPath + "/" + url) {
+                    incrementFileNumber()
+                }
+                
                 // print "└─" for last element for a folder, otherwise print "├─"
                 let branchCharacter = index==directoryContents.count-1 ? branchChar2 : branchChar3
                 print(padding + branchCharacter + url)
                 
                 // recursive invocation
                 if isDirectory(at: parentPath + "/" + url) {
+                    incrementFolferNumber()
                     printFoldersHelper(for: parentPath + "/" + url, depth: depth+1, padding: padding + paddingChar)
                 }
             }
@@ -46,8 +88,8 @@ class FolderStructure {
             print(error)
         }
     }
-
-    private static func isDirectory(at path: String) -> Bool {
+    
+    private func isDirectory(at path: String) -> Bool {
         var directoryExists: ObjCBool = ObjCBool(false)
         _ = FileManager.default.fileExists(
             atPath: path,
