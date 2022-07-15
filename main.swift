@@ -56,11 +56,11 @@ class FolderStructure {
     func printFolders(for rootPath: String) -> Void{
         var layer: Set<Int> = []
         print(rootPath)
-        printFoldersHelper(for: rootPath, depth: 0, activeLayer: &layer)
+        printFoldersHelper(for: rootPath, depth: 0, activeLayerForPipeChar: &layer)
         printTotalFileNumber()
     }
     
-    private func printFoldersHelper(for parentPath: String, depth: Int, activeLayer: inout Set<Int>) -> Void {
+    private func printFoldersHelper(for parentPath: String, depth: Int, activeLayerForPipeChar: inout Set<Int>) -> Void {
         do {
             let directoryContents = try FileManager.default.contentsOfDirectory(atPath: parentPath).sorted()
             
@@ -69,7 +69,7 @@ class FolderStructure {
                 // handle "|" output
                 if depth > 0 {
                     for i in 0..<depth {
-                        if activeLayer.contains(i) {
+                        if activeLayerForPipeChar.contains(i) {
                             print(branchChar1, terminator: "")
                         } else {
                             print(branchChar4, terminator: "")
@@ -87,15 +87,15 @@ class FolderStructure {
                     
                     // manage index for printing "|" symbols
                     if index != directoryContents.count-1 {
-                        activeLayer.insert(depth)
+                        activeLayerForPipeChar.insert(depth)
                     } else if index == directoryContents.count-1 {
-                        activeLayer.remove(depth)
+                        activeLayerForPipeChar.remove(depth)
                     }
                     
                     printFoldersHelper(
                         for: parentPath + "/" + url,
                         depth: depth+1,
-                        activeLayer: &activeLayer
+                        activeLayerForPipeChar: &activeLayerForPipeChar
                     )
                 } else {
                     incrementFileNumber()
