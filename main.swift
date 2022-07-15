@@ -10,7 +10,7 @@
 
 import Foundation
 
-// test invocation -> replace the argument for your environment
+//test invocation
 let folderStructure = FolderStructure()
 folderStructure.printFolders(for: "/Users/yusuke/Desktop/textbooks/test")
 
@@ -22,17 +22,10 @@ class FolderStructure {
     init() {}
     
     let paddingChar = "      "
-    let branchChar1 = "│ "
-    let branchChar2 = "└─ "
-    let branchChar3 = "├─ "
-    
-    func printFolders(for rootPath: String) -> Void{
-        print(rootPath)
-        printFoldersHelper(for: rootPath, depth: 0)
-        print()
-        printTotalFileNumber()
-        print()
-    }
+    let branchChar1 = " │ "
+    let branchChar2 = " └─ "
+    let branchChar3 = " ├─ "
+    let branchChar4 = "    "
     
     private func incrementFileNumber() -> Void {
         self.fileNumber += 1
@@ -60,28 +53,52 @@ class FolderStructure {
         resetCounter()
     }
     
-    private func printFoldersHelper(for parentPath: String, depth: Int, padding: String = "") -> Void {
+    func printFolders(for rootPath: String) -> Void{
+        var layer: Set<Int> = []
+        print(rootPath)
+        printFoldersHelper(for: rootPath, depth: 0, activeLayer: &layer)
+        printTotalFileNumber()
+    }
+    
+    private func printFoldersHelper(for parentPath: String, depth: Int, activeLayer: inout Set<Int>) -> Void {
         do {
-            let directoryContents = try FileManager.default.contentsOfDirectory(atPath: parentPath)
+            let directoryContents = try FileManager.default.contentsOfDirectory(atPath: parentPath).sorted()
             
             for (index, url) in directoryContents.enumerated() {
-                if depth > 0 {
-                    print(branchChar1, terminator: "")
-                }
                 
-                // manage number of file(folder)
-                if !isDirectory(at: parentPath + "/" + url) {
-                    incrementFileNumber()
+                // handle "|" output
+                if depth > 0 {
+                    for i in 0..<depth {
+                        if activeLayer.contains(i) {
+                            print(branchChar1, terminator: "")
+                        } else {
+                            print(branchChar4, terminator: "")
+                        }
+                        print(paddingChar, terminator: "")
+                    }
                 }
                 
                 // print "└─" for last element for a folder, otherwise print "├─"
                 let branchCharacter = index==directoryContents.count-1 ? branchChar2 : branchChar3
-                print(padding + branchCharacter + url)
+                print(branchCharacter + url)
                 
-                // recursive invocation
                 if isDirectory(at: parentPath + "/" + url) {
                     incrementFolferNumber()
-                    printFoldersHelper(for: parentPath + "/" + url, depth: depth+1, padding: padding + paddingChar)
+                    
+                    // manage index for printing "|" symbols
+                    if index != directoryContents.count-1 {
+                        activeLayer.insert(depth)
+                    } else if index == directoryContents.count-1 {
+                        activeLayer.remove(depth)
+                    }
+                    
+                    printFoldersHelper(
+                        for: parentPath + "/" + url,
+                        depth: depth+1,
+                        activeLayer: &activeLayer
+                    )
+                } else {
+                    incrementFileNumber()
                 }
             }
         } catch {
